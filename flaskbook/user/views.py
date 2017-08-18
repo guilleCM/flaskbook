@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, session
+from flask import Blueprint, render_template, request, redirect, session, url_for
 import bcrypt
 # APP MODULES
 from user.models import User
@@ -51,3 +51,13 @@ def register():
         return 'User registered'
     return render_template('user/register.html', 
                             form=form)
+                            
+@user_app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    session.pop('username')
+    return redirect(url_for('user_app.login'))
+    
+@user_app.route('/<username>', methods=['GET', 'POST'])
+def profile(username):
+    user = User.objects.filter(username=username).first()
+    return render_template('user/profile.html', user=user)
