@@ -1,14 +1,18 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, redirect, session
 import bcrypt
 # APP MODULES
 from user.models import User
-from user.forms import RegisterForm
+from user.forms import RegisterForm, LoginForm
 
 user_app = Blueprint('user_app', __name__)
 
-@user_app.route('/login')
+@user_app.route('/login', methods=['GET', 'POST'])
 def login():
-    return 'User Login'
+    form = LoginForm()
+    error = None
+    return render_template('user/login.html',
+                            form=form,
+                            error=error)
     
 @user_app.route('/register', methods=['GET', 'POST'])
 def register():
