@@ -5,7 +5,7 @@ import os
 # APP MODULES
 from application import db
 from utilities.common import utc_now_ts as now
-from settings import STATIC_IMAGE_URL
+from settings import STATIC_IMAGE_URL, AWS_BUCKET, AWS_CONTENT_URL
 
 class User(db.Document):
     username = db.StringField(db_field="u", required=True, unique=True)
@@ -25,7 +25,10 @@ class User(db.Document):
         document.email = document.email.lower()
     
     def profile_imgsrc(self, size):
-        return os.path.join(STATIC_IMAGE_URL, 'user', '%s.%s.%s.png' % (self.id, self.profile_image, size) )
+        if AWS_BUCKET:
+            return os.path.join(AWS_CONTENT_URL, AWS_BUCKET, 'user', '%s.%s.%s.png' % (self.id, self.profile_image, size) )
+        else:
+            return url_for('static', filename=os.path.join(STATIC_IMAGE_URL, 'user', '%s.%s.%s.png' % (self.id, self.profile_image, size) ))
         
     meta = {
         'indexes': ['username', 'email', '-created'] #poniendo el - delante decimos que sea en orden inverso (los mas recientes primero en el caso del campo created)
