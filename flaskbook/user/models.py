@@ -1,7 +1,11 @@
 from mongoengine import signals
+from flask import url_for
+import os
+
 # APP MODULES
 from application import db
 from utilities.common import utc_now_ts as now
+from settings import STATIC_IMAGE_URL
 
 class User(db.Document):
     username = db.StringField(db_field="u", required=True, unique=True)
@@ -13,12 +17,16 @@ class User(db.Document):
     bio = db.StringField(db_field="b", max_length=160)
     email_confirmed = db.BooleanField(db_field="ecf", default=False)
     change_configuration = db.DictField(db_field="cc")
+    profile_image = db.StringField(db_field="i", default=None)
     
     @classmethod
     def pre_save(cls, sender, document, **kwargs):
         document.username = document.username.lower()
         document.email = document.email.lower()
     
+    def profile_imgsrc(self, size):
+        return os.path.join(STATIC_IMAGE_URL, 'user', '%s.%s.%s.png' % (self.id, self.profile_image, size) )
+        
     meta = {
         'indexes': ['username', 'email', '-created'] #poniendo el - delante decimos que sea en orden inverso (los mas recientes primero en el caso del campo created)
     }

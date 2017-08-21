@@ -1,10 +1,14 @@
 from flask import Blueprint, render_template, request, redirect, session, url_for, abort
 import bcrypt
 import uuid
+import os
+from werkzeug import secure_filename
 # APP MODULES
 from user.models import User
 from user.forms import RegisterForm, LoginForm, EditForm, ForgotForm, PasswordResetForm
 from utilities.common import email
+from settings import UPLOAD_FOLDER
+from utilities.imaging import thumbnail_process
 
 user_app = Blueprint('user_app', __name__)
 
@@ -72,7 +76,7 @@ def logout():
 def profile(username):
     edit_profile = False
     user = User.objects.filter(username=username).first()
-    if session.get('username') and user.username == session.get('username'):
+    if user and session.get('username') and user.username == session.get('username'):
         edit_profile = True
     if user:
         return render_template('user/profile.html',
@@ -102,6 +106,13 @@ def edit():
     if user:
         form = EditForm(obj=user)
         if form.validate_on_submit():
+            # check if image
+            image_ts = None
+            if request.files.get('image'):
+                filename = secure_filename(form.image.data.filename)
+                file_path = os.path.join(UPLOAD_FOLDER, 'user', filename)
+                form.image.data.save(file_path)
+                image_ts = str(thumbnail_process(file_path, 'user', str(user.id)))
             if user.username != form.username.data.lower():
                 if User.objects.filter(username=form.username.data.lower()).first():
                     error = 'Username already exists'
@@ -126,6 +137,8 @@ def edit():
                     email(user.change_configuration['new_email'], 'Confirm your new email', body_html, body_text)
             if not error:
                 form.populate_obj(user)
+                if image_ts:
+                    user.profile_image = image_ts
                 user.save()
                 if not message:
                     message = 'Profile updated'
@@ -133,7 +146,8 @@ def edit():
         return render_template('user/edit.html',
                                 form=form,
                                 error=error,
-                                message=message)
+                                message=message,
+                                user=user)
     else:
         abort(404)
         
@@ -194,3 +208,30 @@ def password_reset(username, code):
 @user_app.route('/password_reset_complete')
 def password_reset_complete():
     return render_template('user/password_change_confirmed.html')
+    
+@user_app.route('/change_password', methods=['GET', 'POST'])
+def change_password():
+    require_current = True
+    error = None
+    form = PasswordResetForm()
+    user = User.objects.filter(username=session.get('username')).first()
+    if not user:
+        abort(404)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            if bcrypt.hashpw(form.current_password.data, user.password) == user.password:
+                salt = bcrypt.gensalt()
+                hashed_password = bcrypt.hashpw(form.password.data, salt)
+                user.password = hashed_password
+                user.save()
+                
+                # if user is logged in, log him out
+                if session.get('username'):
+                    session.pop('username')
+                return redirect(url_for('user_app.password_reset_complete'))
+            else:
+                error = 'Incorrect password'
+    return render_template('user/password_reset.html', 
+                            form=form,
+                            error=error,
+                            require_current=require_current)
