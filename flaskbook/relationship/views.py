@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, session, redirect, url_for
+from flask import Blueprint, abort, session, redirect, url_for, request
 
 from user.models import User
 from relationship.models import Relationship
@@ -9,6 +9,7 @@ relationship_app = Blueprint('relationship_app', __name__)
 @relationship_app.route('/add_friend/<to_username>')
 @login_required
 def add_friend(to_username):
+    ref = request.referrer
     logged_user = User.objects.filter(username=session.get('username')).first()
     to_user = User.objects.filter(username=to_username).first()
     if to_user:
@@ -34,13 +35,14 @@ def add_friend(to_username):
                 rel_type=Relationship.FRIENDS,
                 status=Relationship.PENDING
                 ).save()
-        return redirect(url_for('user_app.profile', username=to_username))
+        return redirect(ref)
     else:
         abort(404)
         
 @relationship_app.route('/remove_friend/<to_username>')
 @login_required
 def remove_friend(to_username):
+    ref = request.referrer
     logged_user = User.objects.filter(username=session.get('username')).first()
     to_user = User.objects.filter(username=to_username).first()
     if to_user:
@@ -55,13 +57,14 @@ def remove_friend(to_username):
                 from_user=to_user,
                 to_user=logged_user
                 ).delete()
-        return redirect(url_for('user_app.profile', username=to_username))
+        return redirect(ref)
     else:
         abort(404)
         
 @relationship_app.route('/block/<to_username>')
 @login_required
 def block(to_username):
+    ref = request.referrer
     logged_user = User.objects.filter(username=session.get('username')).first()
     to_user = User.objects.filter(username=to_username).first()
     if to_user:
@@ -82,13 +85,14 @@ def block(to_username):
             rel_type=Relationship.BLOCKED,
             status=Relationship.APPROVED
             ).save()
-        return redirect(url_for('user_app.profile', username=to_username))
+        return redirect(ref)
     else:
         abort(404)
     
 @relationship_app.route('/unblock/<to_username>')
 @login_required
 def unblock(to_username):
+    ref = request.referrer
     logged_user = User.objects.filter(username=session.get('username')).first()
     to_user = User.objects.filter(username=to_username).first()
     if to_user:
@@ -99,6 +103,6 @@ def unblock(to_username):
                 from_user=logged_user,
                 to_user=to_user
                 ).delete()
-        return redirect(url_for('user_app.profile', username=to_username))
+        return redirect(ref)
     else:
         abort(404)

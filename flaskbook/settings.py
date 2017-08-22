@@ -12,3 +12,4 @@ STATIC_IMAGE_URL = 'images'
 # for dev
 AWS_BUCKET = ''
 AWS_CONTENT_URL = ''
+AWS_SEND_MAIL = False
