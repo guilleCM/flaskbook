@@ -7,16 +7,19 @@ def create_app(**config_overrides):
     app = Flask(__name__)
     app.config.from_pyfile('settings.py')
     
-    #para testeo sobreescribe las settings
+    # para testeo sobreescribe las settings
     app.config.update(config_overrides)
     
-    #init db
+    # init db
     db.init_app(app)
     
-    #Adding blueprints
+    # Adding blueprints
     from user.views import user_app
     app.register_blueprint(user_app)
     from relationship.views import relationship_app
     app.register_blueprint(relationship_app)
+    
+    from feed.views import feed_app
+    app.register_blueprint(feed_app)
     
     return app

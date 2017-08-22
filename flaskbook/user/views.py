@@ -4,6 +4,7 @@ import uuid
 import os
 from werkzeug import secure_filename
 # APP MODULES
+from feed.forms import FeedPostForm
 from user.models import User
 from user.forms import RegisterForm, LoginForm, EditForm, ForgotForm, PasswordResetForm
 from utilities.common import email
@@ -101,13 +102,16 @@ def profile(username, page=1):
         else:
             friends = friends[:5]
         
+        form = FeedPostForm()
+        
         return render_template('user/profile.html',
                                 user=user,
                                 logged_user=logged_user,
                                 rel=rel,
                                 friends=friends,
                                 friends_total=friends_total,
-                                friends_page=friends_page)
+                                friends_page=friends_page,
+                                form=form)
     else:
         abort(404)
         
