@@ -69,12 +69,12 @@ def register():
     return render_template('user/register.html', 
                             form=form)
                             
-@user_app.route('/logout', methods=['GET', 'POST'])
+@user_app.route('/logout')
 def logout():
     session.pop('username')
     return redirect(url_for('user_app.login'))
     
-@user_app.route('/<username>', methods=['GET', 'POST'])
+@user_app.route('/<username>')
 def profile(username):
     edit_profile = False
     rel = None
