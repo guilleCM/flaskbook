@@ -26,4 +26,4 @@ def home():
             )
             
     else:
-        return "Welcome to Flaskbook!"
+        return render_template('home/home.html')
