@@ -14,6 +14,7 @@ from settings import UPLOAD_FOLDER
 from utilities.imaging import thumbnail_process
 from relationship.models import Relationship
 from user.decorators import login_required
+from feed.models import Message, POST
 
 user_app = Blueprint('user_app', __name__)
 
@@ -85,6 +86,8 @@ def profile(username, friends_page_number=1):
     rel = None
     friends_page = False
     user = User.objects.filter(username=username).first()
+    profile_messages = []
+    
     if user:
         if session.get('username'):
             logged_user = User.objects.filter(username=session.get('username')).first()
@@ -106,11 +109,13 @@ def profile(username, friends_page_number=1):
         
         form = FeedPostForm()
         
-        # get user messages
-        profile_messages = Message.objects.filter(
-            Q(from_user=user) | Q(to_user=user)
-        ).order_by('-create_date')[:10] #get me all the messages that are either from user equals the user i'm looking
-                                        #or not are to the user i'm looking are
+        # get user messages if friends or self
+        if logged_user and (rel == 'SAME' or rel == 'FRIENDS_APPROVED'):
+            profile_messages = Message.objects.filter(
+                Q(from_user=user) | Q(to_user=user),
+                message_type=POST
+            ).order_by('-create_date')[:10] #get me all the messages that are either from user equals the user i'm looking
+                                            #or not are to the user i'm looking are
         
         return render_template('user/profile.html',
                                 user=user,
