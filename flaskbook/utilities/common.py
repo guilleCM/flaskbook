@@ -1,10 +1,24 @@
 import time
 import boto3
 from flask import current_app
+import datetime
+import arrow
+import bleach
 
 def utc_now_ts():
     return int(time.time())
-    
+
+# dado el int que representa el timestamp, lo convierte en un formato para saber cuanto hace desde ese momento
+# por ejemplo, posteado hace 3 horas
+def ms_stamp_humanize(ts):
+    ts = datetime.datetime.fromtimestamp(ts)
+    return arrow.get(ts).humanize()
+
+# convierte cualquier url escrita en el cuerpo del post en un tag <a href> para html
+def linkify(text):
+    text = bleach.clean(text, tags=[], attributes={}, styles=[], strip=True)
+    return bleach.linkify(text)
+
 def email(to_email, subject, body_html, body_text):
     # don't run this if we're running a test
     if current_app.config.get('TESTING') or not current_app.config.get('AWS_SEND_MAIL'):

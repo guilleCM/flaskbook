@@ -2,6 +2,7 @@ from mongoengine import CASCADE
 # APP MODULES
 from application import db
 from utilities.common import utc_now_ts as now
+from utilities.common import linkify, ms_stamp_humanize
 from user.models import User
 
 class Message(db.Document):
@@ -12,6 +13,14 @@ class Message(db.Document):
     create_date = db.IntField(db_field="c", default=now())
     parent = db.ObjectIdField(db_field="p", default=None)
     image = db.StringField(db_field="i", default=None)
+    
+    @property
+    def text_linkified(self):
+        return linkify(self.text)
+    @property
+    def human_timestamp(self):
+        return ms_stamp_humainze(self.create_date)
+    
     
     meta = {
         'indexes': [('from_user', 'to_user', '-create_date', 'parent', 'live')]

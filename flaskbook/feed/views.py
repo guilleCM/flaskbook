@@ -3,7 +3,7 @@ from flask import Blueprint, request, session, redirect, url_for
 from user.decorators import login_required
 from user.models import User
 from feed.models import Message, Feed
-# from feed.process import process_message
+from feed.process import process_message
 
 feed_app = Blueprint('feed_app', __name__)
 
@@ -14,7 +14,8 @@ def add_message():
     if request.method == 'POST':
         from_user = User.objects.get(username=session.get('username'))
         to_user = User.objects.get(username=request.values.get('to_user'))
-        
+        post = request.values.get('post')
+
         # if this is a self post
         if to_user == from_user:
             to_user = None
@@ -33,7 +34,7 @@ def add_message():
         ).save()
         
         # process the message
-        # procces_message(message)
+        process_message(message)
         
         if ref:
             return redirect(ref)
