@@ -3,8 +3,10 @@ import bcrypt
 import uuid
 import os
 from werkzeug import secure_filename
+from mongoengine import Q
 # APP MODULES
 from feed.forms import FeedPostForm
+from feed.models import Message
 from user.models import User
 from user.forms import RegisterForm, LoginForm, EditForm, ForgotForm, PasswordResetForm
 from utilities.common import email
@@ -75,10 +77,10 @@ def logout():
     session.pop('username')
     return redirect(url_for('user_app.login'))
 
-@user_app.route('/<username>/friends/<int:page>', endpoint='profile-friends-page')   
+@user_app.route('/<username>/friends/<int:friends_page_number>', endpoint='profile-friends-page')   
 @user_app.route('/<username>/friends', endpoint='profile-friends') #endpoint signinifca que quieres usar ese nombre para el metodo 'url_for'
 @user_app.route('/<username>')
-def profile(username, page=1):
+def profile(username, friends_page_number=1):
     logged_user = None
     rel = None
     friends_page = False
@@ -98,11 +100,17 @@ def profile(username, page=1):
         
         if 'friends' in request.url:
             friends_page = True
-            friends = friends.paginate(page=page, per_page=3)
+            friends = friends.paginate(page=friends_page_number, per_page=3)
         else:
             friends = friends[:5]
         
         form = FeedPostForm()
+        
+        # get user messages
+        profile_messages = Message.objects.filter(
+            Q(from_user=user) | Q(to_user=user)
+        ).order_by('-create_date')[:10] #get me all the messages that are either from user equals the user i'm looking
+                                        #or not are to the user i'm looking are
         
         return render_template('user/profile.html',
                                 user=user,
@@ -111,7 +119,8 @@ def profile(username, page=1):
                                 friends=friends,
                                 friends_total=friends_total,
                                 friends_page=friends_page,
-                                form=form)
+                                form=form,
+                                profile_messages=profile_messages)
     else:
         abort(404)
         

@@ -19,7 +19,7 @@ class Message(db.Document):
         return linkify(self.text)
     @property
     def human_timestamp(self):
-        return ms_stamp_humainze(self.create_date)
+        return ms_stamp_humanize(self.create_date)
     
     
     meta = {
