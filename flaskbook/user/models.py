@@ -19,8 +19,10 @@ class User(db.Document):
     change_configuration = db.DictField(db_field="cc")
     profile_image = db.StringField(db_field="i", default=None)
     
+    # lowercase the username and email
     @classmethod
-    def pre_save(cls, sender, document, **kwargs):
+    def pre_save(cls, sender, document, **kwargs): #class, sender(who's sending this method), document(actual document we are going to save) 
+        # builtin mongoengine method (presave) => This method is call before every object is written to the database
         document.username = document.username.lower()
         document.email = document.email.lower()
     
@@ -37,4 +39,5 @@ class User(db.Document):
         'indexes': ['username', 'email', '-created'] #poniendo el - delante decimos que sea en orden inverso (los mas recientes primero en el caso del campo created)
     }
 
+# signals es la forma en que mongodb utiliza el method pre_save
 signals.pre_save.connect(User.pre_save, sender=User)
